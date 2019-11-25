@@ -15,6 +15,9 @@ img.responsitive {
 }
 
 /* Ant Design List 组件 gutter 不生效，用这个让 List子元素之间有个左右的边框 */
+.ant-spin-container{
+    overflow: hidden;
+}
 .ant-spin-container>div{
     padding-left: 8px;
     padding-right: 8px;

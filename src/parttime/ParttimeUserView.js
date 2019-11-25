@@ -1,10 +1,13 @@
 import React from 'react';
+import BigTitle from "./components/BigTitle";
+import SelfViewPanel from "./components/SelfViewPanel";
+import AuthPanel from "./components/AuthPanel";
 
 class ParttimeUserView extends React.Component{
 
     constructor(props){
         super(props);
-        this.state = {token: ''}
+        this.state = {token: '123'}
     };
 
     checkLogin(){
@@ -23,7 +26,8 @@ class ParttimeUserView extends React.Component{
     }
 
     render() {
-        <div>
+        return (<div>
+            <BigTitle title={'个人信息'} />
             {this.checkLogin() ?
                 (<SelfViewPanel
                     token={this.state.token}
@@ -33,7 +37,7 @@ class ParttimeUserView extends React.Component{
                 (<AuthPanel
                     loginTarget={'api/user/login'}
                     registerTarget={'api/user/register'}
-                    onOperation={(acitonType='loginORregister', code200, resultData) => {
+                    onResult={(acitonType='loginORregister', code200, resultData) => {
                         if (code200 && resultData.succ){
                             const TOKEN = resultData.token;
                             this.onLogin(TOKEN);
@@ -41,6 +45,8 @@ class ParttimeUserView extends React.Component{
                     }}
                 />)
             }
-        </div>
+        </div>);
     }
 }
+
+export default ParttimeUserView;

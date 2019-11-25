@@ -1,21 +1,28 @@
 import React from 'react';
 import ParttimeView from "./ParttimeView";
-
-//import "antd/lib/layout/style/css";
+import ParttimeUserView from './ParttimeUserView';
 
 import Layout from 'antd/lib/layout';
 
 import {Button} from "antd";
 
+import 'antd/dist/antd.css';
+
 const {Header, Footer, Content} = Layout;
+
+const VIEWS = {
+    hello : 'hello_view',
+    parttimes : 'parttimes_view',
+    user : 'user_view',
+};
 
 export default class MainRender extends React.Component{
     views = new Map();
     constructor(props){
         super(props);
         this.state = {
-            defaultView: 'hello_view',
-            currentView: 'hello_view',
+            defaultView: VIEWS.hello,
+            currentView: VIEWS.hello,
         };
         this.loadView.bind(this);
         this.renderView.bind(this);
@@ -25,8 +32,9 @@ export default class MainRender extends React.Component{
         let view = this.views.get(viewName);
         if (view != null) return;
         switch (viewName) {
-            case 'hello_view':view = (<Layout>Hello View</Layout>);break;
-            case 'parttimes_view': view = <ParttimeView />;break;
+            case VIEWS.hello:view = (<div><h1 style={{textAlign: 'center'}}>欢迎使用Parttimes活动平台</h1></div>);break;
+            case VIEWS.parttimes: view = <ParttimeView />;break;
+            case VIEWS.user: view = <ParttimeUserView />;break;
             default:break;
         }
         if (view != null) this.views.set(viewName, view);
@@ -44,10 +52,11 @@ export default class MainRender extends React.Component{
         this.loadView(this.state.currentView);
         return (
             <div>
-                <Header style={{background: '#f1f1f1'}}>
-                    <Button.Group>
-                        <Button onClick={()=>this.setState({currentView: 'hello_view'})}>显示HelloView</Button>
-                        <Button onClick={()=>this.setState({currentView: 'parttimes_view'})}>显示ParttimeView</Button>
+                <Header style={{backgroundColor: 'rgba(137,150,255,0.56)', textAlign: "center"}}>
+                    <Button.Group size={"large"}>
+                        <Button onClick={()=>this.setState({currentView: VIEWS.hello})}>欢迎使用</Button>
+                        <Button onClick={()=>this.setState({currentView: VIEWS.parttimes})}>活动列表</Button>
+                        <Button onClick={()=>this.setState({currentView: VIEWS.user})}>个人信息</Button>
                     </Button.Group>
                 </Header>
                 <Content style={{marginBottom: 32}}>

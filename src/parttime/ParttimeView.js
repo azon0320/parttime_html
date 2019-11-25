@@ -5,20 +5,16 @@ import {
     Divider, Row, Col, Badge, Empty
 } from "antd";
 
-import 'antd/dist/antd.css';
+
 
 import './style/general.css';
+import BigTitle from "./components/BigTitle";
 
-const PARTTIME_ENDED = 1;
-const PARTTIME_CANCELLED = 2;
-const PARTTIME_STARTING = 3;
-const PARTTIME_OUTSIGN = 4;
-const PARTTIME_SIGNING = 5;
+import {ParttimeConst, ParttimeRecordConst} from "./Consts";
 
-const RECORD_UNSIGN = 0;
-const RECORD_CANCELLED = 1;
-const RECORD_CHECKED = 2;
-const RECORD_SIGNED = 3;
+const {PARTTIME_ENDED, PARTTIME_CANCELLED,PARTTIME_OUTSIGN,PARTTIME_SIGNING,PARTTIME_STARTING } = ParttimeConst;
+
+const {RECORD_UNSIGN, RECORD_CANCELLED, RECORD_CHECKED} = ParttimeRecordConst;
 
 const ITEMS_PER_FETCH = 3;
 
@@ -69,7 +65,12 @@ export default class extends React.Component{
         this.fetchTask = fetch('/api/parttime/view?limit='+ITEMS_PER_FETCH+'&page=' + (pageViews),
             {method: 'post'})
             .then(response => response.json())
-            .then(obj => this.onParttimeDataReceive.bind(this)(obj));
+            .then(obj => this.onParttimeDataReceive.bind(this)(obj))
+            .catch(reason => {
+                console.log(reason);
+                this.setState({datas:[], isLoading: false})
+            })
+        ;
     }
 
     onParttimeDataReceive(jsondata){
@@ -177,27 +178,26 @@ export default class extends React.Component{
          */
 
         return (
-            <List
-                itemLayout={"horizontal"}
-                grid={{column: 1, lg: 2, gutter: 8}}
-                style={{margin: '0 8px'}}
-                loading={this.state.isLoading}
-                header={
-                    <Row style={{margin: 8}} type={'flex'} justify={'space-between'} align={'middle'}>
-                        <Col><h2 className={'large_title'}>活动列表</h2></Col>
-                        <Col><Button type={"default"} disabled={this.state.isLoading} onClick={() => this.refresh.bind(this)(true)}>刷新</Button></Col>
-                    </Row>
-                }
-            >
-                {this.renderParttimeListItems.bind(this)(this.renderSingleParttimeItem.bind(this))}
-                {this.state.reachBottom ? (
-                    <Divider orientation={"center"} children={<span style={{color: 'rgba(0,0,0,.5)'}}>到底啦</span>} />) :
-                    (<Button
-                        onClick={this.loadMore.bind(this)}
-                        disabled={this.state.isLoading || this.state.reachBottom}
-                        style={{width: '100%'}}
-                        size={"large"}>查看更多</Button>)}
-            </List>
+            <div>
+                <BigTitle title={"活动列表"} rightExtras={[
+                    <Button type={"default"} disabled={this.state.isLoading} onClick={() => this.refresh.bind(this)(true)}>刷新</Button>
+                ]} />
+                <List
+                    itemLayout={"horizontal"}
+                    grid={{column: 1, lg: 2, gutter: 8}}
+                    style={{margin: '0 8px'}}
+                    loading={this.state.isLoading}
+                >
+                    {this.renderParttimeListItems.bind(this)(this.renderSingleParttimeItem.bind(this))}
+                    {this.state.reachBottom ? (
+                            <Divider orientation={"center"} children={<span style={{color: 'rgba(0,0,0,.5)'}}>到底啦</span>} />) :
+                        (<Button
+                            onClick={this.loadMore.bind(this)}
+                            disabled={this.state.isLoading || this.state.reachBottom}
+                            style={{width: '100%'}}
+                            size={"large"}>查看更多</Button>)}
+                </List>
+            </div>
         );
     }
 }
