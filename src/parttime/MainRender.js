@@ -4,7 +4,7 @@ import ParttimeUserView from './ParttimeUserView';
 
 import Layout from 'antd/lib/layout';
 
-import {Button} from "antd";
+import {Button, Radio, Row} from "antd";
 
 import 'antd/dist/antd.css';
 
@@ -32,7 +32,7 @@ export default class MainRender extends React.Component{
         let view = this.views.get(viewName);
         if (view != null) return;
         switch (viewName) {
-            case VIEWS.hello:view = (<div><h1 style={{textAlign: 'center'}}>欢迎使用Parttimes活动平台</h1></div>);break;
+            case VIEWS.hello:view = (<HelloView />);break;
             case VIEWS.parttimes: view = <ParttimeView />;break;
             case VIEWS.user: view = <ParttimeUserView />;break;
             default:break;
@@ -52,12 +52,12 @@ export default class MainRender extends React.Component{
         this.loadView(this.state.currentView);
         return (
             <div>
-                <Header style={{backgroundColor: 'rgba(137,150,255,0.56)', textAlign: "center"}}>
-                    <Button.Group size={"large"}>
-                        <Button onClick={()=>this.setState({currentView: VIEWS.hello})}>欢迎使用</Button>
-                        <Button onClick={()=>this.setState({currentView: VIEWS.parttimes})}>活动列表</Button>
-                        <Button onClick={()=>this.setState({currentView: VIEWS.user})}>个人信息</Button>
-                    </Button.Group>
+                <Header style={{backgroundColor: 'rgba(137,150,255,0.56)' , height: 'unset', textAlign: "center"}}>
+                    <Radio.Group buttonStyle={"outline"} size={"default"} defaultValue={VIEWS.hello}>
+                        <Radio.Button value={VIEWS.hello} onClick={()=>this.setState({currentView: VIEWS.hello})}>欢迎使用</Radio.Button>
+                        <Radio.Button value={VIEWS.parttimes} onClick={()=>this.setState({currentView: VIEWS.parttimes})}>活动列表</Radio.Button>
+                        <Radio.Button value={VIEWS.user} onClick={()=>this.setState({currentView: VIEWS.user})}>个人信息</Radio.Button>
+                    </Radio.Group>
                 </Header>
                 <Content style={{marginBottom: 32}}>
                     {this.renderView(this.state.currentView)}
@@ -70,3 +70,5 @@ export default class MainRender extends React.Component{
         );
     }
 }
+
+export const HelloView = () => (<div><h1 style={{textAlign: 'center'}}>欢迎使用Parttimes活动平台</h1></div>);

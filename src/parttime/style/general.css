@@ -22,3 +22,10 @@ img.responsitive {
     padding-left: 8px;
     padding-right: 8px;
 }
+
+div.auth_panel{
+    max-width: 384px;
+    margin: 0 auto;
+    border: 1px solid rgba(0,0,0,.25);
+    border-radius: 2px;
+}

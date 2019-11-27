@@ -10,7 +10,10 @@ import {
 import './style/general.css';
 import BigTitle from "./components/BigTitle";
 
-import {ParttimeConst, ParttimeRecordConst} from "./Consts";
+import {ParttimeConst, ParttimeRecordConst} from "./tools/Consts";
+
+import {ParttimeRequest} from "./tools/ParttimeRequest";
+import ListedParttime from "./components/ListedParttime";
 
 const {PARTTIME_ENDED, PARTTIME_CANCELLED,PARTTIME_OUTSIGN,PARTTIME_SIGNING,PARTTIME_STARTING } = ParttimeConst;
 
@@ -40,10 +43,11 @@ export default class extends React.Component{
             reachBottom : false
         });
         setTimeout(() => {
-            fetch('/api/parttime/view?limit='+ITEMS_PER_FETCH+'&page=' + (1),
-                {method: 'post'})
-                .then(response => response.json())
-                .then(obj => this.onParttimeDataReceive.bind(this)(obj));
+            ParttimeRequest.parttimes.view(
+                ITEMS_PER_FETCH, 1,
+                obj => this.onParttimeDataReceive.bind(this)(obj),
+                reason => this.setState.bind(this)({datas:[], isLoading: false})
+            );
         }, 1000);
     }
 
@@ -62,21 +66,23 @@ export default class extends React.Component{
         pageViews++;
         //TODO 删除
         console.log("正在加载：第$pageViews页".replace("$pageViews", pageViews));
-        this.fetchTask = fetch('/api/parttime/view?limit='+ITEMS_PER_FETCH+'&page=' + (pageViews),
-            {method: 'post'})
-            .then(response => response.json())
-            .then(obj => this.onParttimeDataReceive.bind(this)(obj))
-            .catch(reason => {
-                console.log(reason);
-                this.setState({datas:[], isLoading: false})
-            })
-        ;
+        ParttimeRequest.parttimes.view(
+            ITEMS_PER_FETCH, pageViews,
+            obj => this.onParttimeDataReceive.bind(this)(obj),
+            reason => this.setState.bind(this)({datas:[], isLoading: false})
+        );
     }
 
     onParttimeDataReceive(jsondata){
         if (!this.mounted) return;
         let pageViews = this.state.pageViews;
-        let data = this.state.datas;jsondata.forEach(one => data.push(one));
+        let data = this.state.datas;
+        try{
+            jsondata.forEach(one => data.push(one));
+        }catch (e) {
+            console.log(e, jsondata);
+            return;
+        }
         this.setState({
             datas: data, isLoading: false,
             pageViews: jsondata.length > 0 ? ++pageViews : pageViews,
@@ -96,74 +102,7 @@ export default class extends React.Component{
     }
 
     renderSingleParttimeItem(jsonOne){
-        const IMG_GENERATOR = this.renderParttimeImage.bind(this);
-        const STATUS = jsonOne.status, RECORD_STATUS = jsonOne.record.status;
-        let BADGE = null;
-        const ActionButtonProps = {
-            disabled: STATUS !== PARTTIME_SIGNING || RECORD_STATUS === RECORD_CANCELLED,
-            type: (STATUS === PARTTIME_SIGNING ? 'primary' :
-                (RECORD_STATUS === RECORD_CHECKED ? 'success' : 'default')),
-            title:
-                RECORD_STATUS === RECORD_UNSIGN ? '报名' :
-                    (RECORD_STATUS === RECORD_CANCELLED ? '已取消报名' :
-                        (RECORD_STATUS === RECORD_CHECKED ? "已签到" : '取消报名'))
-        };
-        switch (STATUS) {
-            case PARTTIME_ENDED: //已结束
-                BADGE = (<Badge count={"已结束"} style={{background: '#a5a5a5', margin: '0 16px'}} />);
-                break;
-            case PARTTIME_CANCELLED: //已取消
-                BADGE = (<Badge count={"已取消"} style={{background: '#e20007', margin: '0 16px'}} />);
-                break;
-            case PARTTIME_STARTING: //进行中
-                BADGE = (<Badge count={"进行中"} style={{background: '#6a94ff', margin: '0 16px'}} />);
-                break;
-            case PARTTIME_OUTSIGN: //已截止
-                BADGE = (<Badge count={"已截止"} style={{background: 'rgba(77,198,0,0.51)', margin: '0 16px'}} />);
-                break;
-            case PARTTIME_SIGNING: //报名中
-                BADGE = (<Badge count={"报名中"} style={{background: '#4dc600', margin: '0 16px'}} />);
-                break;
-            default:break;
-        }
-        return (<List.Item key={jsonOne.id}>
-            <Card size={"small"}
-                  title={<Row className={'pointer'} type={'flex'} justify={'start'} align={'middle'}><h2 className={'nomargin'}>{jsonOne.title}</h2>{BADGE}</Row>}
-                  extra={<Button {...ActionButtonProps}>{ActionButtonProps.title}</Button>}
-            >
-                <Row gutter={[8,8]} type={'flex'} justify={'space-around'} style={{marginBottom: 2}}>
-                    {IMG_GENERATOR(jsonOne.id, jsonOne.img_count)}
-                </Row>
-                <Descriptions column={2} size={"small"} bordered={true}>
-                    <Descriptions.Item span={2} label={'开始时间'}>{jsonOne.timestart}</Descriptions.Item>
-                    <Descriptions.Item span={2} label={'结束时间'}>{jsonOne.timeend}</Descriptions.Item>
-                    <Descriptions.Item span={2} label={'截止报名'}>{jsonOne.deadline}</Descriptions.Item>
-                    <Descriptions.Item span={2} label={'活动主导'}>{"%CREATOR 发布于 %TIME".replace("%CREATOR", jsonOne.creator).replace("%TIME", jsonOne.created_at)}</Descriptions.Item>
-                    {jsonOne.content !== '' ? (<Descriptions.Item span={2} label={'活动描述'}>{jsonOne.detail}</Descriptions.Item>) : null}
-                </Descriptions>
-                <Divider style={{margin: '8px 0 4px 0'}} orientation={"center"}/>
-                <Icon type={'environment'}/><span style={{marginLeft: '.5em'}}>{jsonOne.location_str}</span>
-            </Card>
-        </List.Item>);
-    };
-
-    renderParttimeImage(parttimeId, imgCount){
-        let elements = [];
-        for(let i = 0;i < imgCount; i++){
-            elements.push(
-                <Col span={imgCount === 3 ? 8 : 12} key={i}>
-                    <img
-                        className={'responsitive'}
-                        alt={'banner_' + i}
-                        src={'/imgs/$pid/$index'
-                            .replace('$pid', parttimeId)
-                            .replace('$index', i.toString())
-                        }
-                    />
-                </Col>
-            );
-        }
-        return elements;
+        return (<ListedParttime key={jsonOne.id} dataSource={jsonOne} />);
     };
 
     render() {

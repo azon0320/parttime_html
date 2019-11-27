@@ -6,10 +6,12 @@ class BigTitle extends React.Component{
     //title : string
     //rightExtras : []
     //fontSize : int(2)
+    //disableMargin
+    //style
     render(){
         return (
             <div>
-                <Row style={{margin: 16}} type={'flex'} justify={'space-between'} align={'middle'}>
+                <Row style={!this.props.disableMargin && !this.props.style ? {margin: 16} : !!this.props.style ? this.props.style : {}} type={'flex'} justify={'space-between'} align={'middle'}>
                     <Col>
                         <h2 style={typeof this.props.fontSize !== "undefined" ? {fontSize: this.props.fontSize} : {}} className={'large_title'}>{this.props.title}</h2>
                     </Col>

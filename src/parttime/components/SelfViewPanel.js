@@ -1,29 +1,42 @@
 import React from 'react';
 
-import {Avatar, Card, Descriptions, Divider, List} from 'antd';
+import {Icon, Avatar, Card, Descriptions, Divider, List, Empty, Button, Row} from 'antd';
 import BigTitle from "./BigTitle";
 
-import {ParttimeConst, getParttimeStatusString} from "../Consts";
+import {ParttimeConst, getParttimeStatusString} from "../tools/Consts";
+import {StaticImages} from '../imgs/StaticImages';
+import {ParttimeRequest} from "../tools/ParttimeRequest";
+import CreatedParttime from "./CreatedParttime";
 
 export default class SelfViewPanel extends React.Component{
+
     mounted = false;
+    fetchTask = null;
 
     componentDidMount() {
         this.mounted = true;
+        this.doGetSelfViewResult();
     }
     componentWillUnmount() {
         this.mounted = false;
     }
 
+    refresh(){
+        if (this.fetchTask == null) this.doGetSelfViewResult();
+    }
+
+    logout(){
+        const logoutCallback = this.props.onLogout;
+        if (typeof logoutCallback !== "undefined"){logoutCallback();}
+    }
+
     doGetSelfViewResult(){
         this.setState({isLoading: true, errorOccur: false});
-        fetch('api/user/self', {method: 'post'}).then(value => value.json())
-            .then(jsonObj => {
-                if (this.mounted) this.onSelfDataReceive(jsonObj);
-            }).catch(reason => {
-                console.log(reason);
-                this.onSelfDataReceive();
-        });
+        this.fetchTask = ParttimeRequest.user.self(
+            this.props.token,
+            (jsonObj) => {if (this.mounted) this.onSelfDataReceive(jsonObj)},
+            (reason) => this.onSelfDataReceive()
+        );
     }
 
     onSelfDataReceive(jsonORundefined){
@@ -32,13 +45,16 @@ export default class SelfViewPanel extends React.Component{
             modifiedStates.errorOccur = true;
         }else {
             modifiedStates.errorOccur = false;
+            jsonORundefined = jsonORundefined.data;
             modifiedStates.phone = jsonORundefined.phone;
             modifiedStates.uid = jsonORundefined.uid;
             modifiedStates.credit = jsonORundefined.credit;
             modifiedStates.nickname = jsonORundefined.nickname;
-            modifiedStates.parttimes = jsonORundefined.parttimes;
+            modifiedStates.createds = jsonORundefined.createds;
+            modifiedStates.signeds = jsonORundefined.signeds;
         }
         this.setState(modifiedStates);
+        this.fetchTask = null;
     }
 
     //PROPS
@@ -56,94 +72,60 @@ export default class SelfViewPanel extends React.Component{
             nickname: '',
             createds: [],
             signeds: [],
-        }
+        };
+        this.doGetSelfViewResult.bind(this);
+        this.onSelfDataReceive.bind(this);
+        this.refresh.bind(this);
     }
 
     renderCreatedParttimes(created){
-        return (<List.Item key={created.id}>
-            <Card size={"small"}>
-                <BigTitle fontSize={'1.3em'} title={created.title} />
-                <Descriptions size={"small"} style={{marginLeft: 16, marginRight: 16}} layout={"horizontal"} column={{sm: 2, xs: 1}}>
-                    <Descriptions.Item label={'开始时间'}>{created.timestart}</Descriptions.Item>
-                    <Descriptions.Item label={'结束时间'}>{created.timeend}</Descriptions.Item>
-                    <Descriptions.Item label={'报名人数'}>{created.currentsigners}{created.limited===0?'':'/'+created.limited}</Descriptions.Item>
-                    <Descriptions.Item label={'活动状态'}>{getParttimeStatusString(created.status)}</Descriptions.Item>
-                </Descriptions>
-            </Card>
-        </List.Item>);
+        return <CreatedParttime key={created.id} id={created.id} />;
     }
 
     render() {
         return (
-            <div style={{margin: '0 8px'}}>
-                <Avatar src={"/avatar/" + this.state.uid} size={64}/>
-                <Divider orientation={"center"} />
-                <BigTitle
-                    title={'已创建的活动'}
-                    fontSize={'1.5em'}
-                />
-                <List
-                    grid={{column: 1, lg: 2}}
-                    loading={this.state.isLoading}
-                    itemLayout={"horizontal"}
-                    style={{margin: '0 8px'}}
-                >
-                    {CREATED_SAMPLE.map((value) => this.renderCreatedParttimes(value))}
-                </List>
+            <div style={{margin: '0 8px'}}>{
+                this.state.errorOccur ? (
+                    <Empty
+                        image={<img src={StaticImages.error} alt={'ERROR'}/>}
+                        description={<div>出错了！
+                            <Button size={"small"} onClick={()=>this.refresh()}>要不刷新试试</Button>
+                            {!!this.props.enableLogout || typeof this.props.onLogout === 'function' ? (
+                                <span>或者
+                                    <Button size={"small"} onClick={()=>this.logout()}>直接登出</Button></span>
+                            ) : " null"}
+                        </div>}
+                    />) : (
+                    <div>
+                        <Card bordered={true} loading={this.state.isLoading}>
+                            <Card.Meta avatar={<Avatar
+                                    icon={this.state.errorOccur || this.state.uid === '' ? <Icon type={'user'} /> : null}
+                                    src={this.state.errorOccur || this.state.uid === '' ? '' : "/avatar/" + this.state.uid}
+                                    size={128} shape={"square"}/>}
+                                       title={
+                                           <Row justify={'start'} align={'top'} type={'flex'}>
+                                               <h2>{this.state.nickname}</h2>
+                                               <Button style={{marginLeft: 16}} size={"large"} onClick={()=>this.refresh()}>刷新</Button>
+                                               {!!this.props.enableLogout || typeof this.props.onLogout === 'function' ? <Button style={{marginLeft: 16}} size={"large"} onClick={()=>{this.logout()}}>登出</Button> : null}
+                                           </Row>
+                                       }
+                                       description={this.state.phone}
+
+                            />
+                        </Card>
+                        <Divider orientation={"center"} />
+                        <BigTitle style={{margin: 8}} title={'已创建的活动'} fontSize={'1.5em'}/>
+                        <List
+                            grid={{column: 1, lg: 2}}
+                            loading={this.state.isLoading}
+                            itemLayout={"horizontal"}
+                            style={{margin: '0 8px'}}
+                        >
+                            {this.state.createds.map((value, index) => this.renderCreatedParttimes(value))}
+                        </List>
+                    </div>)
+            }
             </div>
         );
     }
 }
-
-const CREATED_SAMPLE = [
-    {
-        id : 2,
-        location : "2,3",
-        limited : 30,
-        timestart : '2019-11-01 23:32',
-        timeend : '2019-11-04 23:32',
-        currentsigners : 14,
-        title : "代拿快递",
-        status : ParttimeConst.PARTTIME_STARTING,
-    },
-    {
-        id : 3,
-        location : "2,3",
-        limited : 30,
-        timestart : '2019-11-01 23:32',
-        timeend : '2019-11-04 23:32',
-        currentsigners : 14,
-        title : "代拿快递2",
-        status : ParttimeConst.PARTTIME_SIGNING,
-    },
-    {
-        id : 4,
-        location : "2,3",
-        limited : 30,
-        timestart : '2019-11-01 23:32',
-        timeend : '2019-11-04 23:32',
-        currentsigners : 14,
-        title : "代拿快递4",
-        status : ParttimeConst.PARTTIME_OUTSIGN,
-    },
-    {
-        id : 5,
-        location : "2,3",
-        limited : 30,
-        timestart : '2019-11-01 23:32',
-        timeend : '2019-11-04 23:32',
-        currentsigners : 14,
-        title : "代拿快递5",
-        status : ParttimeConst.PARTTIME_CANCELLED,
-    },
-    {
-        id : 6,
-        location : "2,3",
-        limited : 30,
-        timestart : '2019-11-01 23:32',
-        timeend : '2019-11-04 23:32',
-        currentsigners : 14,
-        title : "代拿快递6",
-        status : ParttimeConst.PARTTIME_ENDED,
-    },
-];
