@@ -97,20 +97,26 @@ export default class SelfViewPanel extends React.Component{
                         </div>}
                     />) : (
                     <div>
-                        <Card bordered={true} loading={this.state.isLoading}>
+                        <Card bordered={true} loading={this.state.isLoading}
+                              title={<h2 className={'nomargin'}>{this.state.nickname}</h2>}
+                              extra={<Row justify={'start'} align={'top'} type={'flex'}>
+                                  <Button onClick={()=>this.refresh()}>刷新</Button>
+                                  {!!this.props.enableLogout || typeof this.props.onLogout === 'function' ?
+                                      <Button style={{marginLeft: 8}} onClick={()=>{this.logout()}}>登出</Button> : null}
+                              </Row>}
+                        >
                             <Card.Meta avatar={<Avatar
                                     icon={this.state.errorOccur || this.state.uid === '' ? <Icon type={'user'} /> : null}
                                     src={this.state.errorOccur || this.state.uid === '' ? '' : "/avatar/" + this.state.uid}
                                     size={128} shape={"square"}/>}
-                                       title={
-                                           <Row justify={'start'} align={'top'} type={'flex'}>
-                                               <h2>{this.state.nickname}</h2>
-                                               <Button style={{marginLeft: 16}} size={"large"} onClick={()=>this.refresh()}>刷新</Button>
-                                               {!!this.props.enableLogout || typeof this.props.onLogout === 'function' ? <Button style={{marginLeft: 16}} size={"large"} onClick={()=>{this.logout()}}>登出</Button> : null}
-                                           </Row>
+                                       description={
+                                           <Descriptions size={"small"} layout={"horizontal"} column={{xs: 1, sm:2}}>
+                                               <Descriptions.Item label={'昵称'}>{this.state.nickname}</Descriptions.Item>
+                                               <Descriptions.Item label={'手机号'}>{this.state.phone}</Descriptions.Item>
+                                               <Descriptions.Item label={'UID'}>{this.state.uid}</Descriptions.Item>
+                                               <Descriptions.Item label={'信用分'}>{this.state.credit}</Descriptions.Item>
+                                           </Descriptions>
                                        }
-                                       description={this.state.phone}
-
                             />
                         </Card>
                         <Divider orientation={"center"} />
